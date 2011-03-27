@@ -67,8 +67,8 @@ foreach ($options[0] as $option) {
     }
 }
 
-if (!isset($key) || !isset($secret) || !isset($id)) {
-    echo SERVICE_STATUS.' Unknown'."\n";
+if (!isset($key) || !isset($secret) || !isset($id) || !isset($lookback) || !isset($minimum) || !isset($critical) || !isset($warning)) {
+    echo SERVICE_STATUS.' Unknown. Usage: check_browsermob --key=<BrowserMob Key> --secret=<BrowserMob Secret> --id=<BrowserMob ID> --lookback=<Seconds to look back in seconds> --minimum=<Minimum response time in milliseconds> --warning=<Percentage of probes allowed to fail for warning status> --critical=<Percentage of probes allowed to fail for critical status>'."\n";
     exit(3);
 } else {
     $response = $browsermob->call(
