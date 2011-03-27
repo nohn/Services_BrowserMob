@@ -1,0 +1,130 @@
+#!/usr/bin/php
+<?php
+/* vim: set expandtab tabstop=4 shiftwidth=4 softtabstop=4: */
+
+/**
+ * Services_BrowserMob
+ *
+ * This script utilizes the Services_BrowserMob package as Nagios probe.
+ *
+ * PHP version 5
+ *
+ * LICENSE: This source file is subject to version 3.01 of the PHP license
+ * that is available through the world-wide-web at the following URI:
+ * http://www.php.net/license/3_01.txt.  If you did not receive a copy of
+ * the PHP License and are unable to obtain it through the web, please
+ * send a note to license@php.net so we can mail you a copy immediately.
+ *
+ * Services_BrowserMob looks up an supplied host if it's listed in 1-n supplied
+ * Blacklists
+ *
+ * @category  Services
+ * @package   BrowserMob
+ * @author    Sebastian Nohn <sebastian@nohn.net>
+ * @copyright 2011 Sebastian Nohn <sebastian@nohn.net>
+ * @license   http://www.php.net/license/3_01.txt  PHP License 3.01
+ * @version   $Id$
+ * @link      https://github.com/nohn/Services_BrowserMob
+ * @since     File available since Release 1.0.0
+ */
+
+define('SERVICE_STATUS', 'Service Status:');
+
+require_once 'Console/Getopt.php';
+require_once 'Services/BrowserMob.php';
+
+$browsermob = new Services_BrowserMob();
+
+$shortoptions = 'k:s:i:m:c:w:';
+$longoptions = array('key=', 'secret=', 'id=', 'lookback=', 'minimum=', 'critical=', 'warning=');
+
+$con = new Console_Getopt;
+$args = $con->readPHPArgv();
+array_shift($args);
+$options = $con->getopt2($args, $shortoptions, $longoptions);
+
+foreach ($options[0] as $option) {
+    if ($option[0] == 'k' || $option[0] == '--key') {
+        $key = $option[1];
+    }
+    if ($option[0] == 's' || $option[0] == '--secret') {
+        $secret = $option[1];
+    }
+    if ($option[0] == 'i' || $option[0] == '--id') {
+        $id = $option[1];
+    }
+    if ($option[0] == 'l' || $option[0] == '--lookback') {
+        $lookback = $option[1];
+    }
+    if ($option[0] == 'm' || $option[0] == '--minimum') {
+        $minimum = $option[1];
+    }
+    if ($option[0] == 'c' || $option[0] == '--critical') {
+        $critical = $option[1];
+    }
+    if ($option[0] == 'w' || $option[0] == '--warning') {
+        $warning = $option[1];
+    }
+}
+
+if (!isset($key) || !isset($secret) || !isset($id)) {
+    echo SERVICE_STATUS.' Unknown'."\n";
+    exit(3);
+} else {
+    $response = $browsermob->call(
+        $key, 
+        $secret, 
+        'http://browsermob.com/a/m/'.$id, 
+        array('metric' => 'responseTime',
+              'start' => (gmmktime()-$lookback).'000', 
+              'end' => gmmktime().'000',
+              'resolution' => 'hour')
+    );
+    $locationcount = 0;
+    $probecount = 0;
+    $probecount_fail = 0;
+
+    $perfdata = array();
+
+    $responsesum = 0;
+
+    foreach ($response as $location => $results) {
+        $locationcount++;
+        foreach ($results as $result) {
+            $perfdata[$location]['responseTime'] = $result->responseTime;
+            $perfdata[$location]['minResponseTime'] = $result->minResponseTime;
+            $perfdata[$location]['maxResponseTime'] = $result->maxResponseTime;
+            $responsesum += $result->responseTime;
+            $probecount++;
+            if ($result->responseTime > $minimum) {
+                $probecount_fail++;
+            }
+        }
+    }
+
+    $probecount_success=$probecount-$probecount_fail;
+
+    $successrate = $probecount_success/$probecount;
+
+    $perfdata_string = '';
+
+    foreach ($perfdata as $location => $perfdatum) {
+        foreach ($perfdatum as $measure => $value) {
+            $perfdata_string .= $location.'_'.$measure.'='.$value.', ';
+        }
+    }
+    $perfdata_string  = 'ALL_average='.round($responsesum/$probecount).', '.$perfdata_string.' ALL_successrate='.round($successrate, 2);
+    $status_string    = $probecount_success.' of '.$probecount.' probes ('.round($successrate*100).'%) on '.$locationcount.' locations succeeded ('.round($responsesum/$probecount).'ms avg. Response Time) Details: http://browsermob.com/monitoring/view/'.$id;
+
+    if ($successrate <= $critical/100) {
+        echo SERVICE_STATUS.' Critical - '.$status_string.' | '.$perfdata_string."\n";
+        exit(2);
+    } else if ($successrate <= $warning/100) {
+        echo SERVICE_STATUS.' Warning - '.$status_string.' | '.$perfdata_string."\n";
+        exit(1);
+    } else {
+        echo SERVICE_STATUS.' OK - '.$status_string.' | '.$perfdata_string."\n";
+        exit(0);
+    }
+}
+?>
