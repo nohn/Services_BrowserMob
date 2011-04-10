@@ -20,7 +20,7 @@
  *     the documentation and/or other materials provided with the
  *     distribution.
  *
- *   * Neither the name of Sebastian Bergmann nor the names of his
+ *   * Neither the name of Sebastian Nohn nor the names of his
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -43,7 +43,7 @@
  * @package   Services_BrowserMob
  * @author    Sebastian Nohn <sebastian@nohn.net>
  * @copyright 2011 Sebastian Nohn <sebastian@nohn.net>
- * @license   http://www.php.net/license/3_01.txt  PHP License 3.01
+ * @license   http://www.opensource.org/licenses/bsd-license.php  BSD License
  * @version   $Id$
  * @link      https://github.com/nohn/Services_BrowserMob
  * @see       Services_BrowserMob
@@ -58,7 +58,7 @@
  * @category Services
  * @package  Services_BrowserMob
  * @author   Sebastian Nohn <sebastian@nohn.net>
- * @license  http://www.php.net/license/3_01.txt  PHP License 3.01
+ * @license  http://www.opensource.org/licenses/bsd-license.php  BSD License
  * @version  $Id$
  * @link     https://github.com/nohn/Services_BrowserMob
  */
