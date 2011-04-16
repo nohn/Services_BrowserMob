@@ -65,16 +65,62 @@
 
 class Services_BrowserMob
 {
+    private $_key;
+    private $_secret;
+
+    /**
+     * Set BrowserMob Key
+     *
+     * @param string $key BrowserMob Key
+     *
+     * @return void
+     */
+    public function setKey($key)
+    {
+        $this->_key = $key;
+    }
+
+    /**
+     * Get BrowserMob Key
+     *
+     * @return string BrowserMob Key
+     */
+    public function getKey()
+    {
+        return $this->_key;
+    }
+
+    /**
+     * Set BrowserMob Secret
+     *
+     * @param string $secret BrowserMob Secret
+     *
+     * @return void
+     */
+    public function setSecret($secret)
+    {
+        $this->_secret = $secret;
+    }
+
+    /**
+     * Get BrowserMob Secret
+     *
+     * @return string BrowserMob Secret
+     */
+    public function getSecret()
+    {
+        return $this->_secret;
+    }
+
     /**
      * Sign a BrowserMob Request
      *
-     * @param string $secret BrowserMob Secret
      * @param string $url    BrowserMob URL
      * @param string $params BrowserMob Parameters
      *
      * @return BrowserMob Signature
      **/
-    public function sign($secret, $url, $params)
+    public function sign($url, $params)
     {
         ksort($params);
         $urlencoded_params = array();
@@ -87,28 +133,27 @@ class Services_BrowserMob
         $data .= $parsed_url['path']."\n";
         $data .= http_build_query($urlencoded_params);
         
-        $digest = hash_hmac('sha1', $data, $secret, true);
+        $digest = hash_hmac('sha1', $data, $this->getSecret(), true);
         return base64_encode($digest);
     }
     
     /**
      * Call BrowserMob API
      *
-     * @param string $key    BrowserMob Key
-     * @param string $secret BrowserMob Secret
      * @param string $url    BrowserMob URL
      * @param string $params BrowserMob Parameters
      *
      * @return BrowserMob API Response Object
      **/
-    public function call($key, $secret, $url, $params)
+    public function call($url, $params)
     {
-        $params['key'] = $key;
+        $params['key'] = $this->getKey();
         $params['timestamp'] = time().'000';
         $params['nonce'] = uniqid();
-        $params['signature'] = $this->sign($secret, $url, $params);
+        $params['signature'] = $this->sign($url, $params);
         $request_url = $url.'?'.http_build_query($params);
         return json_decode(file_get_contents($request_url));
     } 
+
 } // class
 ?>
